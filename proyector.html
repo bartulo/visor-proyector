@@ -1,0 +1,129 @@
+<html>
+  <head></head>
+  <script src="/socket.io/socket.io.js"></script>
+  <body style="margin: 0px;">
+    <canvas id="canvas" width="1024" height="1024"></canvas>
+  <script>
+    class Elements {
+      constructor () {
+        this._id = Elements.incrementId();
+      }
+
+      static incrementId() {
+        if (!this.latestId) this.latestId = 1;
+        else this.latestId++;
+        return this.latestId;
+      }
+
+      coordTranslation (coordx, coordy) {
+        return [(coordx + 150) * 1024 / 300, (coordy + 150) * 1024 / 300]
+      };
+
+      redraw () {
+        ctx.clearRect(0, 0, 1024, 1024);
+        var img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, 1024, 1024);
+        };
+        img.src = "images/pnoa.jpg";
+
+        for (var i = 0; i < canvasElements.length; i++) {
+          canvasElements[i].drawElement2();
+        }
+      }
+
+      remove () {
+        var index = canvasElements.indexOf(this);
+        canvasElements.splice(index, 1);
+        this.redraw();
+      }
+
+    }
+
+    class Icon extends Elements {
+      constructor (icon) {
+        super();
+        this.coords = icon.coords;
+        this.iconType = icon.type;
+      }
+
+      drawElement2 () {
+        var icon = new Image();
+        const [x, y] = this.coordTranslation(this.coords.x, this.coords.y);
+
+        icon.onload = function() {
+          ctx.drawImage(icon, x - 25, y - 25, 50, 50);
+        }
+        icon.src = 'images/iconos/' + this.iconType + '.png';
+      }
+
+      drawElement () {
+        var icon = new Image();
+        const [x, y] = this.coordTranslation(this.coords.x, this.coords.y);
+
+        icon.onload = function() {
+          ctx.drawImage(icon, x - 25, y - 25, 50, 50);
+        }
+        icon.src = 'images/iconos/' + this.iconType + '.png';
+        canvasElements.push(this);
+      }
+    }
+
+    class Line extends Elements {
+      constructor (line) {
+        super();
+        this.coords = line.positions;
+        this.color = [ line.red, line.green, line.blue ];
+      }
+
+      drawElement () {
+        ctx.beginPath();
+        var startPoint = this.coordTranslation(this.coords[0].x, this.coords[0].z);
+        ctx.moveTo(startPoint[0], startPoint[1]);
+
+        for (var i=1; i < this.coords.length; i++) {
+          const [x, y] = this.coordTranslation(this.coords[i].x, this.coords[i].z);
+          ctx.lineTo(x, y);
+        }
+
+        const color = this.color.map( function( x ) { return Math.floor( x * 255 ) } );
+        ctx.strokeStyle = 'rgb( ' +  color[0] + ', ' +  color[1] + ', ' + color[2] + ')';
+        console.log( this.color );
+        ctx.lineWidth = 5;
+        ctx.stroke();
+        canvasElements.push(this);
+      }
+    }
+      
+    var socket = io();
+    var ctx = document.getElementById('canvas').getContext('2d');
+    var img = new Image();
+
+    img.onload = function() {
+      ctx.drawImage(img, 0, 0, 1024, 1024);
+    };
+
+    img.src = "images/pnoa.jpg";
+    canvasElements = [];
+
+    socket.on('icon', function(iconEmitted) {
+      var i = new Icon(iconEmitted);
+      i.drawElement();
+    });
+
+    socket.on('linea', function( linea ) {
+      var l = new Line( linea );
+      l.drawElement();
+    });
+
+    socket.on('remove', function(id) {
+      var elemToErase = canvasElements.filter( function(elem) {
+        return elem._id == id;
+      });
+      elemToErase[0].remove();
+    });
+
+  </script>
+  <!-- <video id="video" src="/images/video.webm" controls="false"></video>-->
+  </body>
+</html>

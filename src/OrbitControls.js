@@ -12,6 +12,7 @@ import {
 } from 'three';
 import { sidebar, scene, camera } from './app';
 import { LineSidebar, IconSidebar } from './sidebar';
+import { io } from 'socket.io-client';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
@@ -38,6 +39,7 @@ class OrbitControls extends EventDispatcher {
 
 		this.object = object;
 		this.domElement = domElement;
+    this.socket = io();
 
 		// Set to false to disable this control
 		this.enabled = true;
@@ -1083,11 +1085,19 @@ class OrbitControls extends EventDispatcher {
 
 			if ( scope.enabled === false ) return;
 
-			handleMouseUp( event );
+      if ( sidebar.state == 'paint' ) {
 
-			scope.dispatchEvent( _endEvent );
+        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.material.color.r, green: scope.lastLine.material.color.g, blue: scope.lastLine.material.color.b} );
 
-			state = STATE.NONE;
+      } else {
+
+        handleMouseUp( event );
+
+        scope.dispatchEvent( _endEvent );
+
+        state = STATE.NONE;
+
+      }
 
 		}
 
