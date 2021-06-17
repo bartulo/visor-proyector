@@ -6,19 +6,15 @@ import {
 	TOUCH,
 	Vector2,
 	Vector3,
-  BufferGeometry,
   Raycaster,
-  LineBasicMaterial,
   Line,
   Color
 } from 'three';
 import { sidebar, scene, camera } from './app';
-import { LineSidebar } from './sidebar';
+import { LineSidebar, IconSidebar } from './sidebar';
 import { Line2 } from 'three/examples/jsm/lines/Line2';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry';
-import {CSS2DObject} from 'three/examples/jsm/renderers/CSS2DRenderer';
-
 
 // This set of controls performs orbiting, dollying (zooming), and panning.
 // Unlike TrackballControls, it maintains the "up" direction object.up (+Y by default).
@@ -803,34 +799,19 @@ class OrbitControls extends EventDispatcher {
       scope.points = [];
       const lineSidebar = new LineSidebar();
 
-      const geometry = new BufferGeometry();
-
-      let matLine = new LineBasicMaterial( {
-        color: sidebar.color,
-        linewidth: 200,
-        alphaToCoverage: true
-      } );
-
-      let line = new Line( geometry, matLine );
-      line.scale.set( 1, 1, 1 );
-      line.frustumCulled = false;
-      scope.lastLine = line;
-      lineSidebar.line = line;
+      scope.lastLine = lineSidebar.createObject();
       lineSidebar.createElement();
 
-      scene.add( line );
+      scene.add( scope.lastLine );
+
     }
 
     function createIcon() {
-      const icon = document.createElement('div');
-      icon.classList.add( 'icon-truck' );
-      icon.style.color = 'white';
-      icon.style.fontSize = '30px';
-      icon.style['-webkit-text-stroke'] = '1px black';
 
-      const label = new CSS2DObject( icon );
-      label.position.copy( getIntersection( event ) );
-      scene.add( label );
+      const icon = new IconSidebar( getIntersection( event ) );
+      icon.createObject();
+      icon.createElement();
+
     }
 
     function getIntersection( event ) {
@@ -1048,10 +1029,18 @@ class OrbitControls extends EventDispatcher {
 
       if ( sidebar.state !== null && event.buttons == 1 ) {
 
-        const point = getIntersection( event );
-        scope.points.push( new Vector3( point.x, point.y + .3, point.z ) );
+        if ( sidebar.state == 'paint' ) {
 
-        scope.lastLine.geometry.setFromPoints( scope.points );
+          const point = getIntersection( event );
+          scope.points.push( new Vector3( point.x, point.y + .3, point.z ) );
+
+          scope.lastLine.geometry.setFromPoints( scope.points );
+
+        } else {
+
+          return;
+
+        }
 
       } else { 
 

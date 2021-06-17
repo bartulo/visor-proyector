@@ -10,10 +10,10 @@
   height: 100%;
   width: 0;
   position: fixed;
-  z-index: 1;
+  z-index: 999;
   top: 0;
   left: 0;
-  background-color: #111;
+  background-color: darkslategrey;
   overflow-x: hidden;
   transition: 0.5s;
   padding-top: 60px;
@@ -86,23 +86,23 @@
 }
 
 .colors > li:nth-child(1){
-  background-color: #ffccff;
+  background-color: gold;
 }
 
 .colors > li:nth-child(2){
-  background-color: #0000ff;
+  background-color: darkviolet;
 }
 
 .colors > li:nth-child(3){
-  background-color: #ff0000;
+  background-color: indianred;
 }
 
 .colors > li:nth-child(4){
-  background-color: #008000;
+  background-color: darkorange;
 }
 
 .colors > li:nth-child(5){
-  background-color: #ffff00;
+  background-color: greenyellow;
 }
 
 .colors > li:nth-child(6){
@@ -122,7 +122,8 @@
 }
 
 .icon div.active-icon {
-  text-shadow: 0 0 10px #f00;
+  --shadow: lightseagreen;
+  text-shadow: 2px 0 5px var(--shadow), -2px 0 5px var(--shadow), 0 2px 5px var(--shadow), 0 -2px 5px var(--shadow);
 }
 
 
@@ -195,15 +196,30 @@
   background-repeat: no-repeat;
 }
   
-.lines {
+.linesToDelete {
   display: flex;
   flex-wrap: wrap;
 }
 
-.lines div.line {
+.linesToDelete div.line {
   padding: 6px;
   margin: 15px;
   border-radius: 20px;
   width: 63px;
   cursor: pointer;
+}
+
+.iconsToDelete {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 36px;
+  margin: 16px;
+}
+
+.iconsToDelete div {
+  padding: 16px;
+  margin: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  border: solid black;
 }
