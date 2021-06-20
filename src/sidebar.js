@@ -3,15 +3,17 @@ import 'js-tabs/src/_js-tabs-base.scss';
 import { scene, sidebar } from './app';
 import { BufferGeometry, LineBasicMaterial, Line, Group, BufferAttribute } from 'three';
 import {CSS2DObject} from 'three/examples/jsm/renderers/CSS2DRenderer';
+import {io} from 'socket.io-client';
 
 class Sidebar {
   constructor () {
     this.menu = document.querySelector('#menuIcon');
     this.sidenav = document.querySelector('#sidenav');
     this.closeButton = document.querySelector('.closebtn');
+    this.socket = io();
     this.state = null;
     this.color = '#ffd700';
-    this.icon = 'camion';
+    this.icon = 'binoculars';
     this.iconClass = 'icon-binoculars';
   }
 
@@ -77,6 +79,16 @@ class Sidebar {
 
 class LineSidebar {
   constructor () {
+    this._id = LineSidebar.incrementId();
+    sidebar.lineId = this._id;
+  }
+
+  static incrementId() {
+
+    if (!this.latestId) this.latestId = 1;
+    else this.latestId++;
+    return this.latestId;
+
   }
 
   createObject () {
@@ -136,6 +148,7 @@ class LineSidebar {
 
     this.elem.remove();
     scene.remove( this.line );
+    sidebar.socket.emit( 'remove', {'id': this._id, 'type': 'line' } );
   }
 
 }
@@ -144,6 +157,16 @@ class IconSidebar {
 
   constructor ( position ) {
     this.position = position;
+    this._id = IconSidebar.incrementId();
+    sidebar.iconId = this._id;
+  }
+
+  static incrementId() {
+
+    if (!this.latestId) this.latestId = 1;
+    else this.latestId++;
+    return this.latestId;
+
   }
 
   createObject () {
@@ -217,6 +240,7 @@ class IconSidebar {
     this.elem.remove();
     this.label.element.remove();
     scene.remove( this.group );
+    sidebar.socket.emit( 'remove', {'id': this._id, 'type': 'icon' } );
 
   }
 

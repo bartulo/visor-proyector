@@ -57,6 +57,7 @@ class App {
 
     var terrainLoader = new TerrainLoader();
     terrainLoader.load(Mdt, function(data) {
+      console.log( data );
       const geometry = new PlaneGeometry( 300, 300, 239, 239 );
       const texture = new TextureLoader().load(Pnoa);
       const material = new MeshBasicMaterial({map: texture});

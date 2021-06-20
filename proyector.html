@@ -2,17 +2,11 @@
   <head></head>
   <script src="/socket.io/socket.io.js"></script>
   <body style="margin: 0px;">
+    <object type="image/scg+xml" data="images/icomoon.svg"></object>
     <canvas id="canvas" width="1024" height="1024"></canvas>
   <script>
     class Elements {
       constructor () {
-        this._id = Elements.incrementId();
-      }
-
-      static incrementId() {
-        if (!this.latestId) this.latestId = 1;
-        else this.latestId++;
-        return this.latestId;
       }
 
       coordTranslation (coordx, coordy) {
@@ -24,12 +18,13 @@
         var img = new Image();
         img.onload = function() {
           ctx.drawImage(img, 0, 0, 1024, 1024);
+
+          for (var i = 0; i < canvasElements.length; i++) {
+            canvasElements[i].drawElement();
+          }
         };
         img.src = "images/pnoa.jpg";
 
-        for (var i = 0; i < canvasElements.length; i++) {
-          canvasElements[i].drawElement2();
-        }
       }
 
       remove () {
@@ -38,35 +33,68 @@
         this.redraw();
       }
 
+      pushElem () {
+
+          canvasElements.push( this );
+
+      }
+
     }
 
     class Icon extends Elements {
+
       constructor (icon) {
+
         super();
         this.coords = icon.coords;
         this.iconType = icon.type;
+        this._id = icon._id;
+        this.type = 'icon';
+
+      }
+      
+      async loadSVG() {
+
+        let response = await fetch('images/icomoon.svg');
+        return await response.text();
+
       }
 
-      drawElement2 () {
-        var icon = new Image();
-        const [x, y] = this.coordTranslation(this.coords.x, this.coords.y);
+      drawElement() {
 
-        icon.onload = function() {
-          ctx.drawImage(icon, x - 25, y - 25, 50, 50);
-        }
-        icon.src = 'images/iconos/' + this.iconType + '.png';
+        this.loadSVG().then((data) => {
+
+          const parser = new DOMParser();
+          const xml = parser.parseFromString( data, "application/xml" );
+          const iconData = xml.querySelector(`glyph[glyph-name=${this.iconType}]`).getAttribute('d');
+
+          let p = new Path2D( iconData );
+          ctx.save();
+          const [x, y] = this.coordTranslation( this.coords.x, this.coords.z );
+          ctx.translate( x + 15, y + 15 );
+          ctx.scale( 0.04, 0.04 );
+          ctx.rotate( Math.PI );
+          ctx.fillStyle = 'white';
+          ctx.fill( p );
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 30;
+          ctx.stroke( p );
+          ctx.restore();
+        
+        });
+
       }
 
-      drawElement () {
-        var icon = new Image();
-        const [x, y] = this.coordTranslation(this.coords.x, this.coords.y);
-
-        icon.onload = function() {
-          ctx.drawImage(icon, x - 25, y - 25, 50, 50);
-        }
-        icon.src = 'images/iconos/' + this.iconType + '.png';
-        canvasElements.push(this);
-      }
+      //drawElement () {
+      //  var icon = new Image();
+      //  const [x, y] = this.coordTranslation(this.coords.x, this.coords.y);
+//
+ //       icon.onload = function() {
+    //      ctx.drawImage(icon, x - 25, y - 25, 50, 50);
+  //      }
+   //     icon.src = 'images/iconos/' + this.iconType + '.png';
+     //   canvasElements.push(this);
+      //}
     }
 
     class Line extends Elements {
@@ -74,6 +102,8 @@
         super();
         this.coords = line.positions;
         this.color = [ line.red, line.green, line.blue ];
+        this._id = line.id;
+        this.type = 'line';
       }
 
       drawElement () {
@@ -88,10 +118,8 @@
 
         const color = this.color.map( function( x ) { return Math.floor( x * 255 ) } );
         ctx.strokeStyle = 'rgb( ' +  color[0] + ', ' +  color[1] + ', ' + color[2] + ')';
-        console.log( this.color );
         ctx.lineWidth = 5;
         ctx.stroke();
-        canvasElements.push(this);
       }
     }
       
@@ -109,18 +137,24 @@
     socket.on('icon', function(iconEmitted) {
       var i = new Icon(iconEmitted);
       i.drawElement();
+      i.pushElem();
     });
 
     socket.on('linea', function( linea ) {
+      console.log( linea );
       var l = new Line( linea );
+      console.log( l );
       l.drawElement();
+      l.pushElem();
     });
 
-    socket.on('remove', function(id) {
+    socket.on('remove', function(ob) {
+
       var elemToErase = canvasElements.filter( function(elem) {
-        return elem._id == id;
+        return elem._id == ob.id && elem.type == ob.type;
       });
       elemToErase[0].remove();
+      console.log( elemToErase[0] );
     });
 
   </script>

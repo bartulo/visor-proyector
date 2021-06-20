@@ -967,6 +967,7 @@ class OrbitControls extends EventDispatcher {
               } else {
 
                 createIcon();
+                scope.socket.emit( 'icon', { 'coords': getIntersection( event ), 'type': sidebar.icon, _id: sidebar.iconId } );
 
               }
 
@@ -1087,7 +1088,7 @@ class OrbitControls extends EventDispatcher {
 
       if ( sidebar.state == 'paint' ) {
 
-        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.material.color.r, green: scope.lastLine.material.color.g, blue: scope.lastLine.material.color.b} );
+        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.material.color.r, green: scope.lastLine.material.color.g, blue: scope.lastLine.material.color.b, id: sidebar.lineId} );
 
       } else {
 
