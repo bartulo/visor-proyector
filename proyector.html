@@ -3,39 +3,52 @@
   <script src="/socket.io/socket.io.js"></script>
   <body style="margin: 0px;">
     <object type="image/scg+xml" data="images/icomoon.svg"></object>
-    <canvas id="canvas" width="1024" height="1024"></canvas>
+    <canvas id="canvas" width="1920" height="1079"></canvas>
   <script>
+
+    class Canvas {
+
+      constructor () {
+        this.ctx = document.getElementById('canvas').getContext('2d');
+        this.img = new Image();
+        this.texture = 'pnoa';
+        this.elements = []
+
+        this.img.onload = () => {
+          this.ctx.drawImage( this.img, 0, 0, 1920, 1080 );
+
+          for ( let i = 0; i < this.elements.length; i++ ) {
+            this.elements[i].drawElement();
+          }
+
+        }
+      }
+
+      draw () {
+        this.ctx.clearRect( 0, 0, 1920, 1080 );
+        this.img.src = `images/${this.texture}.jpg`;
+      }
+
+    }
+
     class Elements {
       constructor () {
+        this.canvas = canvas;
       }
 
       coordTranslation (coordx, coordy) {
-        return [(coordx + 150) * 1024 / 300, (coordy + 150) * 1024 / 300]
+        return [(coordx + 340) * 1920 / 680, (coordy + 192) * 1080 / 384]
       };
 
-      redraw () {
-        ctx.clearRect(0, 0, 1024, 1024);
-        var img = new Image();
-        img.onload = function() {
-          ctx.drawImage(img, 0, 0, 1024, 1024);
-
-          for (var i = 0; i < canvasElements.length; i++) {
-            canvasElements[i].drawElement();
-          }
-        };
-        img.src = "images/pnoa.jpg";
-
-      }
-
       remove () {
-        var index = canvasElements.indexOf(this);
-        canvasElements.splice(index, 1);
-        this.redraw();
+        var index = this.canvas.elements.indexOf(this);
+        this.canvas.elements.splice(index, 1);
+        this.canvas.draw();
       }
 
       pushElem () {
 
-          canvasElements.push( this );
+          this.canvas.elements.push( this );
 
       }
 
@@ -69,17 +82,17 @@
           const iconData = xml.querySelector(`glyph[glyph-name=${this.iconType}]`).getAttribute('d');
 
           let p = new Path2D( iconData );
-          ctx.save();
+          this.canvas.ctx.save();
           const [x, y] = this.coordTranslation( this.coords.x, this.coords.z );
-          ctx.translate( x + 15, y + 15 );
-          ctx.scale( 0.04, 0.04 );
-          ctx.rotate( Math.PI );
-          ctx.fillStyle = 'white';
-          ctx.fill( p );
-          ctx.strokeStyle = 'black';
-          ctx.lineWidth = 30;
-          ctx.stroke( p );
-          ctx.restore();
+          this.canvas.ctx.translate( x + 15, y + 15 );
+          this.canvas.ctx.scale( 0.04, 0.04 );
+          this.canvas.ctx.rotate( Math.PI );
+          this.canvas.ctx.fillStyle = 'white';
+          this.canvas.ctx.fill( p );
+          this.canvas.ctx.strokeStyle = 'black';
+          this.canvas.ctx.lineWidth = 30;
+          this.canvas.ctx.stroke( p );
+          this.canvas.ctx.restore();
         
         });
 
@@ -107,32 +120,25 @@
       }
 
       drawElement () {
-        ctx.beginPath();
+        this.canvas.ctx.beginPath();
         var startPoint = this.coordTranslation(this.coords[0].x, this.coords[0].z);
-        ctx.moveTo(startPoint[0], startPoint[1]);
+        this.canvas.ctx.moveTo(startPoint[0], startPoint[1]);
 
         for (var i=1; i < this.coords.length; i++) {
           const [x, y] = this.coordTranslation(this.coords[i].x, this.coords[i].z);
-          ctx.lineTo(x, y);
+          this.canvas.ctx.lineTo(x, y);
         }
 
         const color = this.color.map( function( x ) { return Math.floor( x * 255 ) } );
-        ctx.strokeStyle = 'rgb( ' +  color[0] + ', ' +  color[1] + ', ' + color[2] + ')';
-        ctx.lineWidth = 5;
-        ctx.stroke();
+        this.canvas.ctx.strokeStyle = 'rgb( ' +  color[0] + ', ' +  color[1] + ', ' + color[2] + ')';
+        this.canvas.ctx.lineWidth = 5;
+        this.canvas.ctx.stroke();
       }
     }
       
     var socket = io();
-    var ctx = document.getElementById('canvas').getContext('2d');
-    var img = new Image();
-
-    img.onload = function() {
-      ctx.drawImage(img, 0, 0, 1024, 1024);
-    };
-
-    img.src = "images/pnoa.jpg";
-    canvasElements = [];
+    let canvas = new Canvas;
+    canvas.draw();
 
     socket.on('icon', function(iconEmitted) {
       var i = new Icon(iconEmitted);
@@ -141,20 +147,23 @@
     });
 
     socket.on('linea', function( linea ) {
-      console.log( linea );
       var l = new Line( linea );
-      console.log( l );
       l.drawElement();
       l.pushElem();
     });
 
     socket.on('remove', function(ob) {
 
-      var elemToErase = canvasElements.filter( function(elem) {
+      var elemToErase = canvas.elements.filter( function(elem) {
         return elem._id == ob.id && elem.type == ob.type;
       });
       elemToErase[0].remove();
-      console.log( elemToErase[0] );
+    });
+
+    socket.on( 'tecla', function( texture ) {
+      console.log( canvas );
+      canvas.texture = texture;
+      canvas.draw();
     });
 
   </script>
