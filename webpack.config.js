@@ -29,7 +29,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.(eot|ttf|woff|svg)$/i,
+        test: /\.(webm|vs|fs|eot|ttf|woff|svg)$/i,
         use: [
           'file-loader',
         ]

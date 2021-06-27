@@ -5,7 +5,11 @@ import {
   TextureLoader,
 	PerspectiveCamera,
 	Scene,
-	WebGLRenderer
+	WebGLRenderer,
+  VideoTexture,
+  ShaderMaterial,
+  WebGL1Renderer,
+  RGBAFormat
 } from 'three';
 
 //import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -14,6 +18,7 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer';
 import { io } from 'socket.io-client';
 
 import TerrainLoader from './terrain.js';
+import TerrainMaterial from './terrainMaterial';
 import { Sidebar } from './sidebar.js';
 
 import Mdt from './images/mdt.bin';
@@ -30,15 +35,21 @@ class App {
 	init() {
 
     const socket = io();
+    const video = document.createElement('video');
+    video.style['display'] = 'none';
+    video.src = 'images/fajas_transparente3.webm';
+    const body = document.body;
+    body.appendChild( video );
     sidebar = new Sidebar();
     sidebar.init();
 
-		camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 1000 );
+		camera = new PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
 		camera.position.set( 0, 800, 0 );
 
 		scene = new Scene();
+    scene.background = 'black';
 
-		renderer = new WebGLRenderer( { antialias: true } );
+		renderer = new WebGL1Renderer( { antialias: true, alpha: true } );
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		document.body.appendChild( renderer.domElement );
@@ -63,21 +74,41 @@ class App {
       console.log( data );
       const geometry = new PlaneGeometry( 680, 384, 169, 95 );
       const texture = new TextureLoader().load(Pnoa);
+      const textureVideo = new VideoTexture( video );
+      textureVideo.format = RGBAFormat;
+      texture.transparent = true;
+
       const texture2 = new TextureLoader().load(Topo);
-      const material = new MeshBasicMaterial({map: texture});
+
+      var uniforms = {
+        texture: { type: 't', value: texture },
+        texture2: { type: 't', value: textureVideo }
+      }
+      const material = new ShaderMaterial({
+        uniforms: uniforms,
+        vertexShader: document.getElementById( 'vertex_shader' ).textContent,
+        fragmentShader: document.getElementById( 'fragment_shader' ).textContent
+      });
 
       document.addEventListener('keydown', ( event ) => {
         
-        if (event.key == 't') {
+        if (event.key == 'p') {
 
-          if ( material.map == texture ) {
+          video.play();
+          console.log( 'p' );
 
-            material.map = texture2;
+        }
+
+        if ( event.key == 't' ) {
+
+          if ( material.uniforms.texture.value == texture ) {
+
+            material.uniforms.texture.value = texture2;
             socket.emit( 'tecla', 'topo' );
-            
+
           } else {
 
-            material.map = texture;
+            material.uniforms.texture.value = texture;
             socket.emit( 'tecla', 'pnoa' );
 
           }

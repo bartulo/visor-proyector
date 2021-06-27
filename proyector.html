@@ -2,7 +2,9 @@
   <head></head>
   <script src="/socket.io/socket.io.js"></script>
   <body style="margin: 0px;">
-    <object type="image/scg+xml" data="images/icomoon.svg"></object>
+    <div>
+      <video id="video" style="display: none" src="images/fajas_transparente3.webm"></video>
+    </div>
     <canvas id="canvas" width="1920" height="1079"></canvas>
   <script>
 
@@ -10,23 +12,63 @@
 
       constructor () {
         this.ctx = document.getElementById('canvas').getContext('2d');
+        this.video = document.getElementById('video');
         this.img = new Image();
         this.texture = 'pnoa';
         this.elements = []
 
+        this.loadSVG().then( data => { this.iconData = data } );
+
         this.img.onload = () => {
           this.ctx.drawImage( this.img, 0, 0, 1920, 1080 );
 
+          this.ctx.drawImage( this.video, 0, 0, 1920, 1080 );
           for ( let i = 0; i < this.elements.length; i++ ) {
             this.elements[i].drawElement();
           }
 
         }
+
+        this.video.addEventListener('play', () => {
+          this.timerCallback();
+        }, false);
+        this.video.addEventListener('pause', () => {
+         clearTimeout(this.st);
+        }, false);
+      }
+
+      async loadSVG() {
+
+        let response = await fetch('images/icomoon.svg');
+        return await response.text();
+
       }
 
       draw () {
         this.ctx.clearRect( 0, 0, 1920, 1080 );
         this.img.src = `images/${this.texture}.jpg`;
+      }
+
+      videoPlay () {
+        this.ctx.clearRect( 0, 0, 1920, 1080 );
+        this.ctx.drawImage( this.img, 0, 0, 1920, 1080 );
+
+        this.ctx.drawImage( this.video, 0, 0, 1920, 1080 );
+
+        for ( let i = 0; i < this.elements.length; i++ ) {
+          this.elements[i].drawElement();
+        }
+
+      }
+
+      timerCallback () {
+
+        this.videoPlay();
+
+        this.st = setTimeout( () => {
+          this.timerCallback();
+        }, 1000 / 24.);
+
       }
 
     }
@@ -63,39 +105,30 @@
         this.iconType = icon.type;
         this._id = icon._id;
         this.type = 'icon';
+        this.data = this.canvas.iconData;
 
       }
       
-      async loadSVG() {
-
-        let response = await fetch('images/icomoon.svg');
-        return await response.text();
-
-      }
 
       drawElement() {
 
-        this.loadSVG().then((data) => {
+        const parser = new DOMParser();
+        const xml = parser.parseFromString( this.data, "application/xml" );
+        const iconData = xml.querySelector(`glyph[glyph-name=${this.iconType}]`).getAttribute('d');
 
-          const parser = new DOMParser();
-          const xml = parser.parseFromString( data, "application/xml" );
-          const iconData = xml.querySelector(`glyph[glyph-name=${this.iconType}]`).getAttribute('d');
-
-          let p = new Path2D( iconData );
-          this.canvas.ctx.save();
-          const [x, y] = this.coordTranslation( this.coords.x, this.coords.z );
-          this.canvas.ctx.translate( x + 15, y + 15 );
-          this.canvas.ctx.scale( 0.04, 0.04 );
-          this.canvas.ctx.rotate( Math.PI );
-          this.canvas.ctx.fillStyle = 'white';
-          this.canvas.ctx.fill( p );
-          this.canvas.ctx.strokeStyle = 'black';
-          this.canvas.ctx.lineWidth = 30;
-          this.canvas.ctx.stroke( p );
-          this.canvas.ctx.restore();
+        let p = new Path2D( iconData );
+        this.canvas.ctx.save();
+        const [x, y] = this.coordTranslation( this.coords.x, this.coords.z );
+        this.canvas.ctx.translate( x + 15, y + 15 );
+        this.canvas.ctx.scale( 0.04, 0.04 );
+        this.canvas.ctx.rotate( Math.PI );
+        this.canvas.ctx.fillStyle = 'white';
+        this.canvas.ctx.fill( p );
+        this.canvas.ctx.strokeStyle = 'black';
+        this.canvas.ctx.lineWidth = 30;
+        this.canvas.ctx.stroke( p );
+        this.canvas.ctx.restore();
         
-        });
-
       }
 
       //drawElement () {
@@ -135,9 +168,16 @@
         this.canvas.ctx.stroke();
       }
     }
+
+    async function loadData( url ) {
+
+      const response = await fetch( url );
+      return response.text();
+
+    }
       
     var socket = io();
-    let canvas = new Canvas;
+    let canvas = new Canvas();
     canvas.draw();
 
     socket.on('icon', function(iconEmitted) {
@@ -161,9 +201,16 @@
     });
 
     socket.on( 'tecla', function( texture ) {
-      console.log( canvas );
       canvas.texture = texture;
       canvas.draw();
+    });
+
+    socket.on('playVideo', function () {
+      canvas.video.play();
+    });
+
+    socket.on('pauseVideo', function () {
+      canvas.video.pause();
     });
 
   </script>

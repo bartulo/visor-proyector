@@ -801,10 +801,11 @@ class OrbitControls extends EventDispatcher {
       scope.points = [];
       const lineSidebar = new LineSidebar();
 
-      scope.lastLine = lineSidebar.createObject();
-      lineSidebar.createElement();
+      lineSidebar.createObject();
 
-      scene.add( scope.lastLine );
+      scope.lastLine = lineSidebar;
+
+      scene.add( scope.lastLine.line );
 
     }
 
@@ -820,9 +821,19 @@ class OrbitControls extends EventDispatcher {
 
       var mouseDownPoint = new Vector2();
 
-      mouseDownPoint.x = (( event.clientX + scope.domElement.offsetLeft ) / window.innerWidth) * 2 - 1;
+      if ( event.constructor.name == 'PointerEvent' ) {
 
-      mouseDownPoint.y = -(( event.clientY + scope.domElement.offsetTop ) / window.innerHeight) * 2 + 1;
+        mouseDownPoint.x = (( event.clientX + scope.domElement.offsetLeft ) / window.innerWidth) * 2 - 1;
+
+        mouseDownPoint.y = -(( event.clientY + scope.domElement.offsetTop ) / window.innerHeight) * 2 + 1;
+
+      } else if ( event.constructor.name == 'TouchEvent' ) {
+
+        mouseDownPoint.x = (( event.touches[0].clientX + scope.domElement.offsetLeft ) / window.innerWidth) * 2 - 1;
+
+        mouseDownPoint.y = -(( event.touches[0].clientY + scope.domElement.offsetTop ) / window.innerHeight) * 2 + 1;
+
+      }
 
       var ray = new Raycaster( );
 
@@ -958,7 +969,7 @@ class OrbitControls extends EventDispatcher {
 
 					} else {
 
-            if ( sidebar.state !== null ) {
+            if ( sidebar.state !== null && sidebar.state !== 'video' ) {
 
               if ( sidebar.state == 'paint' ) {
 
@@ -1037,7 +1048,7 @@ class OrbitControls extends EventDispatcher {
           const point = getIntersection( event );
           scope.points.push( new Vector3( point.x, point.y + .3, point.z ) );
 
-          scope.lastLine.geometry.setFromPoints( scope.points );
+          scope.lastLine.line.geometry.setFromPoints( scope.points );
 
         } else {
 
@@ -1088,7 +1099,8 @@ class OrbitControls extends EventDispatcher {
 
       if ( sidebar.state == 'paint' ) {
 
-        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.material.color.r, green: scope.lastLine.material.color.g, blue: scope.lastLine.material.color.b, id: sidebar.lineId} );
+        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.line.material.color.r, green: scope.lastLine.line.material.color.g, blue: scope.lastLine.line.material.color.b, id: sidebar.lineId} );
+        scope.lastLine.createElement();
 
       } else {
 
@@ -1138,6 +1150,26 @@ class OrbitControls extends EventDispatcher {
 
 						case TOUCH.ROTATE:
 
+              if ( sidebar.state !== null ) {
+
+                if ( sidebar.state == 'icon' ) {
+
+                  createIcon();
+                  scope.socket.emit( 'icon', { 'coords': getIntersection( event ), 'type': sidebar.icon, _id: sidebar.iconId } );
+                
+                  break;
+
+                } else if ( sidebar.state == 'paint' ) {
+
+                  createLine();
+                  state = STATE.TOUCH_ROTATE;
+
+                  break;
+
+                }
+
+              } else {
+
 							if ( scope.enableRotate === false ) return;
 
 							handleTouchStartRotate( event );
@@ -1145,6 +1177,8 @@ class OrbitControls extends EventDispatcher {
 							state = STATE.TOUCH_ROTATE;
 
 							break;
+
+              }
 
 						case TOUCH.PAN:
 
@@ -1222,11 +1256,24 @@ class OrbitControls extends EventDispatcher {
 
 					if ( scope.enableRotate === false ) return;
 
-					handleTouchMoveRotate( event );
+          if ( sidebar.state == 'paint' ) {
 
-					scope.update();
+            const point = getIntersection( event );
+            scope.points.push( new Vector3( point.x, point.y + .3, point.z ) );
 
-					break;
+            scope.lastLine.line.geometry.setFromPoints( scope.points );
+            
+            break;
+
+          } else {
+
+            handleTouchMoveRotate( event );
+
+            scope.update();
+
+            break;
+
+          }
 
 				case STATE.TOUCH_PAN:
 
@@ -1275,6 +1322,12 @@ class OrbitControls extends EventDispatcher {
 			scope.dispatchEvent( _endEvent );
 
 			state = STATE.NONE;
+
+      if ( sidebar.state == 'paint' ) {
+
+        scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.line.material.color.r, green: scope.lastLine.line.material.color.g, blue: scope.lastLine.line.material.color.b, id: sidebar.lineId} );
+
+      }
 
 		}
 

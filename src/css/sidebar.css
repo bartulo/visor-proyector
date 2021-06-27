@@ -223,3 +223,29 @@
   border-radius: 50%;
   border: solid black;
 }
+
+@media screen and (max-width: 1024px) {
+  .icon div {
+    padding: 10px;
+    font-size: 42px;
+  }
+
+  .iconsToDelete {
+    font-size: 19px;
+  }
+
+  .iconsToDelete div {
+    padding: 10px;
+  }
+  .linesToDelete div.line {
+    width: 58px;
+  }
+  .colors {
+    padding-top: 6px;
+    padding-left: 0px;
+  }
+  .colors li {
+    margin: 4px; 
+  }
+}
+

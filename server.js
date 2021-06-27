@@ -30,6 +30,12 @@ io.on('connection', (socket) => {
   socket.on('remove', (id) => {
     io.emit('remove', id);
   });
+  socket.on('playVideo', () => {
+    io.emit('playVideo');
+  });
+  socket.on('pauseVideo', () => {
+    io.emit('pauseVideo');
+  });
 });
 
 server.listen(3000, () => {

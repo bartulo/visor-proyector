@@ -15,6 +15,10 @@ class Sidebar {
     this.color = '#ffd700';
     this.icon = 'binoculars';
     this.iconClass = 'icon-binoculars';
+    this.video = document.querySelector('video');
+    this.play = document.getElementById('play');
+    this.pause = document.getElementById('pause');
+
   }
 
   init () {
@@ -36,11 +40,26 @@ class Sidebar {
       item.addEventListener('click', this.iconClicked2);
     });
     myTabs.init();
+
+    this.play.addEventListener('click', () => {
+      this.video.play();
+      this.socket.emit('playVideo');
+    })
+
+    this.pause.addEventListener('click', () => {
+      this.video.pause();
+      this.socket.emit('pauseVideo');
+    })
+
   }
 
   openSidebar () {
     this.state = document.querySelector('.js-tabs__tab.active').title;
-    this.sidenav.style.width = '350px';
+    if ( window.innerWidth > 1024 ) {
+      this.sidenav.style.width = '350px';
+    } else {
+      this.sidenav.style.width = '232px';
+    }
   }
 
   closeSidebar () {
@@ -105,11 +124,11 @@ class LineSidebar {
     line.scale.set( 1, 1, 1 );
     line.frustumCulled = false;
     this.line = line;
-    return line;
 
   }
 
   createElement () {
+    console.log( this );
     this.elem = document.createElement('DIV');
     this.elem.classList.add( 'line' );
     this.elem.style.border = 'solid 3px ' + sidebar.color;
