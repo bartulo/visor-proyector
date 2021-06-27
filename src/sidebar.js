@@ -18,6 +18,7 @@ class Sidebar {
     this.video = document.querySelector('video');
     this.play = document.getElementById('play');
     this.pause = document.getElementById('pause');
+    this.seek = document.getElementById('seek');
 
   }
 
@@ -30,26 +31,42 @@ class Sidebar {
       onClickHandlerComplete: this.changeState.bind(this)
     });
     document.querySelectorAll('.colors li').forEach( item => {
-  /// TODO mirar a ver si estos dos métodos se pueden fusionar en uno
       item.addEventListener('click', this.colorClicked );
-      item.addEventListener('click', this.prueba );
     });
 
     document.querySelectorAll('.icon div').forEach( item => {
       item.addEventListener('click', this.iconClicked);
-      item.addEventListener('click', this.iconClicked2);
     });
     myTabs.init();
+
+    this.seek.setAttribute('max', 25 );
+    this.seek.value = 0;
 
     this.play.addEventListener('click', () => {
       this.video.play();
       this.socket.emit('playVideo');
-    })
+    });
 
     this.pause.addEventListener('click', () => {
       this.video.pause();
       this.socket.emit('pauseVideo');
-    })
+    });
+
+    this.video.addEventListener('timeupdate', () => {
+      this.seek.value = Math.floor(this.video.currentTime);
+    });
+
+    this.seek.addEventListener('mousemove', ( event ) => {
+      const skipTo = Math.round( ( event.offsetX / event.target.clientWidth ) * 26 );
+      this.seek.setAttribute('data-seek', skipTo);
+    });
+
+    this.seek.addEventListener('input', ( event ) => {
+      const skipTo = event.target.dataset.seek ? event.target.dataset.seek : event.target.value;
+      this.video.currentTime = skipTo;
+      this.seek.value = skipTo;
+      this.socket.emit('skipTo', skipTo);
+    });
 
   }
 
@@ -72,28 +89,21 @@ class Sidebar {
     this.state = state.title;
   }
 
-  /// TODO mirar a ver si estos dos métodos se pueden fusionar en uno
-
-  colorClicked () {
+  colorClicked = ( event ) => {
     let oldColor = document.querySelector('.active-color');
     oldColor.classList.remove('active-color');
-    this.classList.add('active-color');
-  }
-
-  prueba = () => {
+    event.target.classList.add('active-color');
     this.color = document.querySelector('.active-color').dataset.color;
   }
 
-  iconClicked () {
+  iconClicked = ( event ) => {
     let oldIcon = document.querySelector('.active-icon');
     oldIcon.classList.remove('active-icon');
-    this.classList.add('active-icon');
-  }
-
-  iconClicked2 = () => {
+    event.target.classList.add('active-icon');
     this.icon = document.querySelector('.active-icon').dataset.image;
     this.iconClass = document.querySelector('.active-icon').classList[0];
   }
+
 }
 
 class LineSidebar {
@@ -128,7 +138,6 @@ class LineSidebar {
   }
 
   createElement () {
-    console.log( this );
     this.elem = document.createElement('DIV');
     this.elem.classList.add( 'line' );
     this.elem.style.border = 'solid 3px ' + sidebar.color;

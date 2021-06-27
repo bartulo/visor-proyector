@@ -90,6 +90,24 @@ class App {
         fragmentShader: document.getElementById( 'fragment_shader' ).textContent
       });
 
+      const textureButton = document.querySelector('.textureButton')
+
+      textureButton.addEventListener('click', function () {
+        if ( material.uniforms.texture.value == texture ) {
+
+          material.uniforms.texture.value = texture2;
+          socket.emit( 'tecla', 'topo' );
+          this.innerHTML = 'Ortofoto';
+
+        } else {
+
+          material.uniforms.texture.value = texture;
+          socket.emit( 'tecla', 'pnoa' );
+          this.innerHTML = 'Topo';
+
+        }
+      });
+
       document.addEventListener('keydown', ( event ) => {
         
         if (event.key == 'p') {

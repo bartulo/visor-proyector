@@ -36,6 +36,9 @@ io.on('connection', (socket) => {
   socket.on('pauseVideo', () => {
     io.emit('pauseVideo');
   });
+  socket.on('skipTo', (skipTo) => {
+    io.emit('skipTo', skipTo);
+  });
 });
 
 server.listen(3000, () => {

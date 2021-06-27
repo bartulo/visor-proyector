@@ -213,6 +213,13 @@
       canvas.video.pause();
     });
 
+    socket.on('skipTo', function ( skipTo ) {
+      canvas.video.currentTime = skipTo;
+      setTimeout( function() {
+        canvas.draw();
+      }, 100 );
+    });
+
   </script>
   <!-- <video id="video" src="/images/video.webm" controls="false"></video>-->
   </body>

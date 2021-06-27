@@ -1097,7 +1097,7 @@ class OrbitControls extends EventDispatcher {
 
 			if ( scope.enabled === false ) return;
 
-      if ( sidebar.state == 'paint' ) {
+      if ( sidebar.state == 'paint' && state == -1 ) {
 
         scope.socket.emit( 'linea', {positions: scope.points, red: scope.lastLine.line.material.color.r, green: scope.lastLine.line.material.color.g, blue: scope.lastLine.line.material.color.b, id: sidebar.lineId} );
         scope.lastLine.createElement();

@@ -224,6 +224,12 @@
   border: solid black;
 }
 
+.textureButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
 @media screen and (max-width: 1024px) {
   .icon div {
     padding: 10px;
